@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#8BC34A"
+    android:background="#FFF9C4"
     tools:context=".DealActivity">
 
 
@@ -68,6 +68,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnImage"
         app:srcCompat="@android:color/transparent" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
