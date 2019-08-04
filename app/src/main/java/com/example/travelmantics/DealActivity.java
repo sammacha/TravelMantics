@@ -49,6 +49,7 @@ public class DealActivity extends AppCompatActivity {
     private EditText txtDescription;
     private ImageView dealImage;
     private Uri imageUri;
+    private Button imageButton;
 
     TravelDeal deal;
 
@@ -79,7 +80,7 @@ public class DealActivity extends AppCompatActivity {
         txtPrice.setText(deal.getPrice());
         showImage(deal.getImageUrl());
 
-        Button imageButton = findViewById(R.id.btnImage);
+        imageButton = findViewById(R.id.btnImage);
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -127,10 +128,13 @@ public class DealActivity extends AppCompatActivity {
             menu.findItem(R.id.delete_deal).setVisible(true);
             menu.findItem(R.id.save_deal).setVisible(true);
             enableEditTexts(true);
+            imageButton.setEnabled(true);
+
         } else {
             menu.findItem(R.id.delete_deal).setVisible(false);
             menu.findItem(R.id.save_deal).setVisible(false);
             enableEditTexts(false);
+            imageButton.setEnabled(false);
         }
 
         return true;
@@ -139,58 +143,39 @@ public class DealActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != INSERT_PICTURE && resultCode != RESULT_OK ){
-            Log.d("Image selection","Error getting image from gallery");
-        }else {
 
-            imageUri = data.getData();
-            deal.setImageUrl(imageUri.toString());
+        if(requestCode==INSERT_PICTURE && resultCode==RESULT_OK){
+            assert data != null;
+            final Uri imageUri = data.getData();
             showImage(imageUri.toString());
-            int takeFlags = data.getFlags();
-            takeFlags &= (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    getContentResolver().takePersistableUriPermission(imageUri, takeFlags);
-                }
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-
-            final StorageReference reference = FirebaseUtil.mStorageRef.child(imageUri.getLastPathSegment());
+            final StorageReference
+                    reference = FirebaseUtil.mStorageRef.child(imageUri.getLastPathSegment());
             UploadTask uploadTask = reference.putFile(imageUri);
-
             Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
                 @Override
                 public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
                     if (!task.isSuccessful()) {
                         throw task.getException();
                     }
-
-                    // Continue with the task to get the download URL
-                    String url = reference.getDownloadUrl().toString();
                     return reference.getDownloadUrl();
-
-                }
-            }).addOnSuccessListener(this, new OnSuccessListener<Uri>() {
-                @Override
-                public void onSuccess(Uri uri) {
-
-
                 }
             }).addOnCompleteListener(new OnCompleteListener<Uri>() {
                 @Override
                 public void onComplete(@NonNull Task<Uri> task) {
                     if (task.isSuccessful()) {
                         Uri downloadUri = task.getResult();
+                        assert downloadUri != null;
+                        String imageUrl = downloadUri.toString();
+                        String imageName = task.getResult().getPath();
+                        Log.d("imageUrl", "onSuccess: "+downloadUri.toString());
+                        deal.setImageUrl(imageUrl);
+                        deal.setImageName(imageName);
 
                     } else {
-                        // Handle failures
-                        // ...
+                        Toast.makeText(DealActivity.this, "Picture couldn't be uploaded", Toast.LENGTH_LONG).show();
                     }
                 }
             });
-
         }
 
 
@@ -200,6 +185,7 @@ public class DealActivity extends AppCompatActivity {
         deal.setTitle(txtTitle.getText().toString());
         deal.setPrice(txtPrice.getText().toString());
         deal.setDescription(txtDescription.getText().toString());
+
 
         //choose whether this is a new deal or an existing one
         if (deal.getId() == null) {
