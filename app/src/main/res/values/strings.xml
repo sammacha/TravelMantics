@@ -5,4 +5,6 @@
     <string name="title_hint">Deal Title</string>
     <string name="save_menu">save</string>
     <string name="delete_menu">Delete deal</string>
+    <string name="action_select_picture">Select Picture</string>
+    <string name="exception_image_load_failed">Failed to load image</string>
 </resources>
